@@ -56,26 +56,33 @@ def run_experiment():
                     accelerations.append(accel)
                     
     # 4. Analysis
-    slope, intercept, r_value, p_value, std_err = stats.linregress(gradients, accelerations)
-    print(f"🎯 FINAL RESULT: R-Squared = {r_value**2:.4f}")
-    
-    # 5. Plot
-    plt.figure(figsize=(10, 6), facecolor='#111111')
-    ax = plt.axes()
-    ax.set_facecolor('#111111')
-    plt.scatter(gradients, accelerations, c='cyan', alpha=0.6, s=15, label="Observed Data")
-    
-    line_x = np.array([min(gradients), max(gradients)])
-    line_y = slope * line_x + intercept
-    plt.plot(line_x, line_y, c='lime', lw=2, linestyle='--', label=f"Fit Line (R²={r_value**2:.2f})")
-    
-    plt.title(f"LAW-2 VERIFIED: Gradient vs Acceleration (R²={r_value**2:.2f})", color='white')
-    plt.xlabel("Density Gradient", color='white')
-    plt.ylabel("Acceleration", color='white')
-    plt.grid(True, color='#333333')
-    plt.legend()
-    plt.savefig("figures/law2_result.png") # Auto-save the proof
-    plt.show()
+    if len(gradients) > 0:
+        slope, intercept, r_value, p_value, std_err = stats.linregress(gradients, accelerations)
+        print(f"🎯 FINAL RESULT: R-Squared = {r_value**2:.4f}")
+        
+        # 5. Plot
+        if not os.path.exists("figures"):
+            os.makedirs("figures")
+            
+        plt.figure(figsize=(10, 6), facecolor='#111111')
+        ax = plt.axes()
+        ax.set_facecolor('#111111')
+        plt.scatter(gradients, accelerations, c='cyan', alpha=0.6, s=15, label="Observed Data")
+        
+        line_x = np.array([min(gradients), max(gradients)])
+        line_y = slope * line_x + intercept
+        plt.plot(line_x, line_y, c='lime', lw=2, linestyle='--', label=f"Fit Line (R²={r_value**2:.2f})")
+        
+        plt.title(f"LAW-2 VERIFIED: Gradient vs Acceleration (R²={r_value**2:.2f})", color='white')
+        plt.xlabel("Density Gradient", color='white')
+        plt.ylabel("Acceleration", color='white')
+        plt.grid(True, color='#333333')
+        plt.legend()
+        plt.savefig("figures/law2_result.png") # Auto-save the proof
+        print("📸 Graph saved to figures/law2_result.png")
+        # plt.show() # Uncomment to see popup
+    else:
+        print("⚠️ Not enough data collected to plot.")
 
 if __name__ == "__main__":
     run_experiment()
