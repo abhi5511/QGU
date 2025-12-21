@@ -9,7 +9,7 @@ This repository presents a computational framework based on **Quantum-Gravity Un
 
 Through simulation, we demonstrate three key emergent laws:
 * 🟢 **LAW-1:** Time dilation emerges from local density.
-* 🟢 **LAW-2:** Inertial acceleration responds to density gradients (**R² = 0.85 Verified**).
+* 🟢 **LAW-2:** Inertial acceleration responds to density gradients (**R² = 0.82 Verified**).
 * 🟢 **LAW-3:** Structure formation occurs via a critical phase transition.
 
 ## 🧠 Core Results
@@ -19,7 +19,7 @@ Through simulation, we demonstrate three key emergent laws:
 This effect is strong, monotonic, and robust.
 
 ### LAW-2 — Emergent Gravity (Gradient-Based)
-> Acceleration correlates strongly with density gradients with an **R² score of 0.85**.
+> Acceleration correlates strongly with density gradients with an **R² score of 0.82**.
 Objects move where spacetime changes fastest — not where mass simply exists. This recreates Newton's Second Law purely from geometric gradients.
 
 ### LAW-3 — Structure Formation
@@ -27,7 +27,7 @@ Objects move where spacetime changes fastest — not where mass simply exists. T
 
 ## ⚙️ Installation
 ```bash
-git clone https://github.com/yourusername/QGU-Theory.git
+git clone https://github.com/abhi5511/QGU.git
 cd QGU-Theory
 pip install -r requirements.txt
 ```
