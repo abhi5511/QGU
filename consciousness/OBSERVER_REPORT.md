@@ -16,7 +16,7 @@ Our simulation proves that observation is a physical interaction, not a consciou
 ### 3. THE MECHANISM: PHASE SCRAMBLING
 When the Flow (Electron/Photon) passes near a Sensor Node, the sensor's density gradient ($\nabla \rho$) creates a "Phase Stress."
 
-![Observer Connection](../figures/qgu_mind_proof.png)
+![Observer Connection](../figures/Figure_22.png)
 *Fig 2: The Observer-Mind Connection. As shown in our Neural simulation, the same density-flow rules that create memory also create the 'interference' seen in observation.*
 
 ### 4. CONCLUSION
