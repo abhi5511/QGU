@@ -1,151 +1,102 @@
-import os
-import time
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from matplotlib.colors import hsv_to_rgb
 
-def run_progressive_gargantua():
-    print("⚫ INITIALIZING GARGANTUA RAY-TRACER")
-    print("   Mode: Progressive Scanline Rendering")
-    print("   Physics: GR-inspired (Schwarzschild + Fake Kerr)")
-    print("   Resolution: 1280 x 720")
+# --- QGU CONFIGURATION ---
+BH_MASS = 5000.0      # QGU Density Mass
+EVENT_HORIZON = 1.5   # Point of No Return
+LIGHT_SPEED = 0.2
+NUM_PHOTONS = 120     # Thodi zyada rays for better look
 
-    # ==========================================
-    # 1. CONFIGURATION
-    # ==========================================
-    W, H = 1280, 720
-    BH_MASS = 1.0
-    RS = 2.0 * BH_MASS
+class Photon:
+    def __init__(self, y_pos):
+        self.pos = np.array([-6.0, y_pos]) # Start further back
+        self.vel = np.array([LIGHT_SPEED, 0.0])
+        self.history = []
+        self.trapped = False
+        # Start with Cyan color [Red, Green, Blue]
+        self.color = np.array([0.0, 1.0, 1.0])
 
-    # Accretion disk
-    DISK_INNER = 3.0 * RS
-    DISK_OUTER = 14.0 * RS
-    INCLINATION = np.deg2rad(80)
+photons = [Photon(y) for y in np.linspace(-4, 4, NUM_PHOTONS)]
 
-    # Fake Kerr spin (illusion only)
-    SPIN = 0.3
+# --- VISUAL SETUP ---
+fig, ax = plt.subplots(figsize=(12, 10), facecolor='black')
+ax.set_facecolor('black')
+ax.set_xlim(-6, 6)
+ax.set_ylim(-5, 5)
+ax.set_aspect('equal')
+ax.axis('off')
 
-    # Output buffer
-    final_img = np.zeros((H, W, 3))
+# 1. The Event Horizon (Pure Black Void)
+black_hole_circle = plt.Circle((0, 0), EVENT_HORIZON, color='black', zorder=20)
+ax.add_artist(black_hole_circle)
 
-    # ==========================================
-    # 2. PLOT SETUP
-    # ==========================================
-    plt.ion()
-    fig, ax = plt.subplots(figsize=(12, 7), facecolor="black")
-    ax.set_facecolor("black")
-    ax.axis("off")
-
-    display_img = ax.imshow(
-        final_img,
-        extent=[-20, 20, -12, 12],
-        origin="lower"
-    )
-
-    plt.title("RENDERING GARGANTUA: 0%", color="white")
-    plt.tight_layout()
-
-    # ==========================================
-    # 3. PROGRESSIVE RENDER LOOP
-    # ==========================================
-    CHUNK_SIZE = 10
-    total_chunks = H // CHUNK_SIZE
-    start_time = time.time()
-
-    for i in range(total_chunks):
-        y_end = H - i * CHUNK_SIZE
-        y_start = max(0, y_end - CHUNK_SIZE)
-
-        y, x = np.ogrid[y_start:y_end, 0:W]
-
-        # Screen → physical space mapping
-        x_phys = ((x / W) - 0.5) * 40.0
-        y_phys = ((y / H) - 0.5) * 24.0
-
-        r_screen = np.sqrt(x_phys**2 + y_phys**2) + 1e-6
-
-        # ======================================
-        # PHYSICS ENGINE
-        # ======================================
-
-        # Gravitational lensing (approx)
-        deflection = 4.0 * BH_MASS / r_screen
-
-        # Fake Kerr frame dragging
-        x_twist = x_phys + SPIN * np.log(r_screen + 1)
-
-        r_disk = np.sqrt(
-            x_twist**2 +
-            (y_phys / np.cos(INCLINATION) + deflection)**2
-        )
-
-        # Disk mask
-        disk_mask = (r_disk > DISK_INNER) & (r_disk < DISK_OUTER)
-
-        # Doppler beaming
-        velocity = 0.5 / np.sqrt(r_disk + 0.05)
-        doppler = 1.0 + velocity * (x_phys / r_screen) * np.sin(INCLINATION)
-        intensity = disk_mask * (doppler**4) / (r_disk + 0.3)
-
-        # Disk thickness (vertical fade)
-        thickness = np.exp(-np.abs(y_phys) * 0.15)
-        intensity *= thickness
-
-        # Temperature gradient
-        temperature = np.clip(1.5 / (r_disk + 0.5), 0, 1)
-
-        # Bloom (cinematic glow)
-        bloom = np.clip(intensity - 0.6, 0, 1)
-
-        # Color mapping (hot → blue, cool → red)
-        r = intensity * (0.8 + 0.2 * temperature) + bloom * 0.6
-        g = intensity * (0.4 + 0.5 * temperature) + bloom * 0.5
-        b = intensity * (0.2 + 0.8 * temperature**2) + bloom * 0.4
-
-        # Photon ring
-        photon_ring = (r_screen > 2.58 * RS) & (r_screen < 2.62 * RS)
-        r += photon_ring * 1.0
-        g += photon_ring * 1.0
-        b += photon_ring * 1.2
-
-        # Soft event horizon shadow
-        shadow = np.clip((2.8 * RS - r_screen) / (0.3 * RS), 0, 1)
-        r *= (1 - shadow)
-        g *= (1 - shadow)
-        b *= (1 - shadow)
-
-        # Compose chunk
-        chunk_rgb = np.dstack((r, g, b))
-        chunk_rgb = np.clip(chunk_rgb, 0, 1)
-
-        final_img[y_start:y_end, :, :] = chunk_rgb
-
-        # ======================================
-        # LIVE UPDATE
-        # ======================================
-        display_img.set_data(final_img)
-        progress = int((i + 1) / total_chunks * 100)
-        plt.title(f"RENDERING GARGANTUA: {progress}%", color="white")
-
-        if i % 2 == 0:
-            plt.draw()
-            plt.pause(0.001)
-
-    print(f"✅ Render Complete in {time.time() - start_time:.2f} seconds")
-
-    # ==========================================
-    # SAVE OUTPUT
-    # ==========================================
-    os.makedirs("figures", exist_ok=True)
-    plt.savefig(
-        "figures/gargantua_final.png",
-        dpi=150,
-        facecolor="black"
-    )
-    print("📸 Saved → figures/gargantua_final.png")
-
-    plt.ioff()
-    plt.show()
+# 2. QGU Accretion "Density Glow" (Static visual placeholder for the disk)
+# Ye bas ek static orange glow hai jo high density zone ko darsha raha hai.
+disk_glow = plt.Circle((0, 0), EVENT_HORIZON * 2.5, color='orange', alpha=0.15, zorder=5)
+ax.add_artist(disk_glow)
+disk_core_glow = plt.Circle((0, 0), EVENT_HORIZON * 1.2, color='darkred', alpha=0.3, zorder=6)
+ax.add_artist(disk_core_glow)
 
 
-if __name__ == "__main__":
-    run_progressive_gargantua()
+# Lines now need individual colors, so we use LineCollection later or update individually.
+# For simplicity in animation loop, we keep updating individual lines.
+trails = []
+for p in photons:
+    # Initialize with cyan, will update in loop
+    line, = ax.plot([], [], '-', color=p.color, alpha=0.8, linewidth=1.2, zorder=10)
+    trails.append(line)
+
+print("🕳️ --- QGU GARGANTUA ENGINE --- 🕳️")
+print("Applying Density-based Lensing AND Redshift...")
+
+def update(frame):
+    for i, p in enumerate(photons):
+        if p.trapped: continue
+
+        # --- CORE QGU CALCS ---
+        dist_vec = np.array([0.0, 0.0]) - p.pos
+        dist = np.linalg.norm(dist_vec)
+
+        if dist < EVENT_HORIZON * 0.95: # Slight buffer so lines don't hit bright edge
+            p.trapped = True
+            continue
+
+        # Lensing Pull (Same as before)
+        pull_strength = BH_MASS / (dist**2.5 + 0.1)
+        p.vel += dist_vec * pull_strength * 0.001
+        p.vel = p.vel / np.linalg.norm(p.vel) * LIGHT_SPEED
+        p.pos += p.vel
+        p.history.append(p.pos.copy())
+        if len(p.history) > 200: p.history.pop(0)
+
+        # --- NEW: QGU DENSITY REDSHIFT ---
+        # Rule: Jitni zyada density (paas), utna zyada color shift towards Red.
+        # Hum Cyan [0, 1, 1] se start kar rahe hain.
+        # Orange/Red ki taraf jaane ke liye Red badhana hai, Green/Blue kam karna hai.
+        
+        # Density impact factor (tuned for visual look)
+        density_impact = pull_strength * 0.0003
+
+        # QGU Color shift logic:
+        # Increase Red component based on density drag
+        new_r = min(1.0, p.color[0] + density_impact * 3.0)
+        # Decrease Green component slightly (to get yellow/orange)
+        new_g = max(0.3, p.color[1] - density_impact * 1.0) 
+        # Decrease Blue component rapidly (high energy fades first in QGU)
+        new_b = max(0.0, p.color[2] - density_impact * 4.0)
+        
+        p.color = np.array([new_r, new_g, new_b])
+
+        # Draw trail with new color
+        pts = np.array(p.history)
+        if len(pts) > 0:
+            trails[i].set_data(pts[:, 0], pts[:, 1])
+            trails[i].set_color(p.color) # Update the color of the line itself
+
+    return trails + [black_hole_circle, disk_glow, disk_core_glow]
+
+ani = FuncAnimation(fig, update, frames=400, interval=20, blit=True)
+plt.title("QGU Gargantua: Density Lensing & Redshift", color='orange')
+plt.show()
